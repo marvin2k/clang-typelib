@@ -31,7 +31,8 @@ def write_node(node, parent):
     for t in used_tokens:
         if t == None:
             continue
-        tokens.remove(t)
+        if t in tokens:
+            tokens.remove(t)
     
     for attrib in node:
         if attrib == "children" or attrib == "tokens":
