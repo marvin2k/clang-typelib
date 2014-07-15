@@ -15,3 +15,16 @@ installing clang
 ----------------
 
 see "install_clang.sh"
+
+clang tools
+-----------
+
+use clang-check to print the ast in a human-readable way:
+$ clang-check dummy.cpp -ast-dump -ast-dump-filter SomeSpace
+or listing of type-definitions:
+$ clang-check dummy.cpp -ast-list
+
+use tooling infrastructure
+--------------------------
+
+copy your ${project} to ${git_location}/tools/clang/tools/extra/${project}
