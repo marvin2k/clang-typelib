@@ -2822,6 +2822,10 @@ functionList = [
    [Index, c_char_p],
    c_object_p),
 
+  ("clang_CXXMethod_isPureVirtual",
+   [Cursor],
+   bool),
+
   ("clang_CXXMethod_isStatic",
    [Cursor],
    bool),
@@ -3328,6 +3332,11 @@ functionList = [
    [Type],
    c_longlong),
 
+  ("clang_Type_getClassType",
+   [Type],
+   Type,
+   Type.from_result),
+
   ("clang_Type_getOffsetOf",
    [Type, c_char_p],
    c_longlong),
@@ -3335,6 +3344,10 @@ functionList = [
   ("clang_Type_getSizeOf",
    [Type],
    c_longlong),
+
+  ("clang_Type_getCXXRefQualifier",
+   [Type],
+   c_uint),
 ]
 
 class LibclangError(Exception):
