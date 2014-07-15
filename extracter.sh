@@ -25,8 +25,7 @@ int tmp = sizeof(${name_of_type});
 EOF
 
 # hacked a fix path for my libclang.so -- adopt to your need
-LD_LIBRARY_PATH=$HOME/.vim/bundle/YouCompleteMe/third_party/ycmd python2 \
-    PCX/parse_source.py ${dummy_compile_unit}
+python2 PCX/parse_source.py ${dummy_compile_unit}
 
 echo "structs declared in ${name_of_header_file}:"
 
