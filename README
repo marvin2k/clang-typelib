@@ -38,9 +38,12 @@ clang tools
 -----------
 
 use clang-check to print the ast in a human-readable way:
-$ clang-check dummy.cpp -ast-dump -ast-dump-filter SomeSpace
-or listing of type-definitions:
-$ clang-check dummy.cpp -ast-list
+    clang-check dummy.cpp -ast-dump -ast-dump-filter SomeSpace
+
+or listing of _all_ type-definitions. note that we can directly provide a header
+file without compile-unit or compile_commands. just provide all needed options
+after the double-dash (path to database can be given with "-p"):
+    clang-check dummy/minimal_header.h -ast-list -- -x c++
 
 use tooling infrastructure
 --------------------------
