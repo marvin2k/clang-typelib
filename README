@@ -7,3 +7,11 @@ bug-report for debian-helper scripts on llvm-org
 
 "PCX" is a python parser for the ast
  - http://stackoverflow.com/a/23984908/3520187
+
+using ready-made clang stuff
+============================
+
+installing clang
+----------------
+
+see "install_clang.sh"

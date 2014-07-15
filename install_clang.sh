@@ -30,3 +30,5 @@ ${git_location}/configure \
     --enable-targets=host-only
 
 make -j`getconf _NPROCESSORS_ONLN` all check-all install
+
+echo "install done. take care that your shell finds the binaries under '${install_location}'"
