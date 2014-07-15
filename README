@@ -8,6 +8,24 @@ bug-report for debian-helper scripts on llvm-org
 "PCX" is a python parser for the ast
  - http://stackoverflow.com/a/23984908/3520187
 
+
+shell scripts
+-------------
+
+calling "printer.sh" for base::JointState will give us:
+    time ./printer.sh base::JointState $ROCK_ROOT/base/types/base/JointState.hpp -I$ROCK_ROOT/base/types
+...
+*** Dumping AST Record Layout
+   0 | struct base::JointState
+   0 |   double position
+   8 |   float speed
+  12 |   float effort
+  16 |   float raw
+     | [sizeof=24, dsize=20, align=8
+     |  nvsize=20, nvalign=8]
+./printer.sh base::JointState ~/TransTerrA/rock/base/types/base/JointState.hpp  0.51s user 0.02s system 98% cpu 0.546 total
+
+
 using ready-made clang stuff
 ============================
 
