@@ -48,4 +48,15 @@ after the double-dash (path to database can be given with "-p"):
 use tooling infrastructure
 --------------------------
 
-copy your ${project} to ${git_location}/tools/clang/tools/extra/${project}
+add it to the clang-CMakeLists and create a symlink:
+    tool_name=extractor
+    echo 'add_subdirectory(${tool_name})' >> ${git_location}/tools/clang/tools/extra/CMakeLists.txt
+    ln -s `readlink -f ${tool_name}` ${git_location}/tools/clang/tools/extra/${tool_name}
+
+configure llvm/clang using cmake
+
+compile the llvm-codebase. note that you can't just simply compile only your
+tool, some files will be missing (builtin headers for example).
+    cd ${build_location}
+    make
+    ./bin/extractor $HOME/clang-typelib.git/dummy/build $HOME/clang-typelib.git/dummy/dummy.cpp
