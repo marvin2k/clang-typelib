@@ -17,7 +17,7 @@ usage() {
 
 # use some sensible defaults, which work
 name_of_type=${1:-"SomeSpace::PackedExample"}
-name_of_header_file=${2:-"minimal_header.h"}
+name_of_header_file=${2:-"dummy/minimal_header.h"}
 additional_clang_flags=${3:-""}
 
 # create a dummy-file where we just create a call to the sizeof-operator
@@ -34,7 +34,11 @@ int tmp = sizeof(${name_of_type});
 EOF
 
 # call clang to dump the records. don't create and object-file
-clang ${additional_clang_flags} -c ${dummy_compile_unit} -Xclang -fdump-record-layouts -o /dev/null
+# TODO: test return value to be zero, otherwise syntax errors are present!
+clang ${additional_clang_flags} \
+    -c ${dummy_compile_unit} \
+    -Xclang -fdump-record-layouts \
+    -o /dev/null
 
 # and remove the dummy
 rm ${dummy_compile_unit}
