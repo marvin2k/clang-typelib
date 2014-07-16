@@ -49,19 +49,18 @@ namespace {
 
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
  public:
-  ToolTemplateCallback(Replacements *Replace) : Replace(Replace) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
 //  TODO: This routine will get called for each thing that the matchers find.
 //  At this point, you can examine the match, and do whatever you want,
 //  including replacing the matched text with other text
-    (void) Replace; // This to prevent an "unused member variable" warning;
 
     const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("match");
     if (D) {
+        clang::SourceManager *sm(Result.SourceManager);
 
         // do some initial filtering
-        if (Result.SourceManager->isInSystemHeader(D->getLocation())) {
+        if (sm->isInSystemHeader(D->getLocation())) {
             /* std::cout << "skipping system header " */
             /*     << "'" << D->getLocation().printToString(*Result.SourceManager) << "'" */
             /*     << "\n"; */
@@ -73,7 +72,7 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
           << " named "
           << "'" << D->getQualifiedNameAsString() << "'"
           << " in "
-          << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
+          << "'" << D->getLocation().printToString(*sm) << "'"
           << "\n";
 
       // prints alotta stuff...
@@ -81,8 +80,6 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
     }
   }
 
- private:
-  Replacements *Replace;
 };
 } // end anonymous namespace
 
@@ -119,9 +116,9 @@ int main(int argc, const char **argv) {
     }
   // }}}
 
-  RefactoringTool Tool(*Compilations, SourcePaths);
+  ClangTool Tool(*Compilations, SourcePaths);
   ast_matchers::MatchFinder Finder;
-  ToolTemplateCallback Callback(&Tool.getReplacements());
+  ToolTemplateCallback Callback;
 
   // AST matching ftw...
   //
