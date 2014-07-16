@@ -59,4 +59,11 @@ compile the llvm-codebase. note that you can't just simply compile only your
 tool, some files will be missing (builtin headers for example).
     cd ${build_location}
     make
-    ./bin/extractor $HOME/clang-typelib.git/dummy/build $HOME/clang-typelib.git/dummy/dummy.cpp
+    ./bin/extractor $HOME/clang-typelib.git/dummy/minimal_header.h -- \
+        -x c++
+
+or, in the rock-case:
+    ./bin/extractor $ROCK_ROOT/base/types/base/Pose.hpp -- \
+        -I$ROCK_ROOT/base/types \
+        -I/usr/include/eigen3 \
+        -x c++

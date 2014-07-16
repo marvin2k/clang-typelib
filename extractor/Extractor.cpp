@@ -1,6 +1,15 @@
 //  vim: set foldmethod=marker:
 //  Usage:
-//  tool-template <cmake-output-dir> <file1> <file2> ...
+//  tool-template <header-to-look-at> -- <compile-flags-as-usual>
+//
+//  Example:
+//  ./bin/extractor $ROCK_ROOT/base/types/base/Pose.hpp -- \
+//      -I$ROCK_ROOT/base/types \
+//      -I/usr/include/eigen3 \
+//      -x c++
+//
+//  keep in mind that this particular (not very complicated) example still takes 15seconds to
+//  complete...
 //
 
 // include {{{1
@@ -35,10 +44,8 @@ namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
  public:
 
+  //  This routine will get called for each thing that the matchers find.
   virtual void run(const MatchFinder::MatchResult &Result) {
-//  TODO: This routine will get called for each thing that the matchers find.
-//  At this point, you can examine the match, and do whatever you want,
-//  including replacing the matched text with other text
 
     const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("match");
     if (D) {
@@ -49,9 +56,8 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
             return;
         }
 
+        // sure that this is needed? these could be better excluded using the ast_matcher
         bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
-
-//         std::cout << "Definition " << D->getDefinition() << std::endl;
 
         if (hasLayout && D->getDefinition())
         {
@@ -63,11 +69,8 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
                 << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
                 << "\n";
 
-//             std::cout << "Has ASTContext " << &(D->getASTContext()) << std::endl;
-//             
             const clang::ASTRecordLayout *layout = 0;
             layout = &(D->getASTContext().getASTRecordLayout(D));
-//             std::cout << "Has layout " << layout << std::endl;
 //             std::cout << "Alignment " << layout-> getAlignment().getQuantity() << std::endl;
             std::cout << "Type " << D->getQualifiedNameAsString() <<std::endl;
             std::cout << "  Size " << layout->getSize().getQuantity() << std::endl;
