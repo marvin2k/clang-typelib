@@ -83,7 +83,7 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
 //             std::cout << "Has layout " << layout << std::endl;
 //             std::cout << "Alignment " << layout-> getAlignment().getQuantity() << std::endl;
             std::cout << "Type " << D->getQualifiedNameAsString() <<std::endl;
-            std::cout << "  Size" << layout->getSize().getQuantity() << std::endl;
+            std::cout << "  Size " << layout->getSize().getQuantity() << std::endl;
 
             if(D->field_begin() != D->field_end())
             {
