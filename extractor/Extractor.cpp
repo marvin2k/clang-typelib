@@ -22,6 +22,7 @@
 //        xargs tool-template /path/to/build
 
 // include {{{1
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/SourceManager.h"
@@ -45,6 +46,8 @@ using namespace clang::tooling;
 using namespace llvm;
 // }}}
 
+//const DirectoryEntry* theDir;
+
 namespace {
 
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
@@ -59,21 +62,25 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
     if (D) {
         clang::SourceManager *sm(Result.SourceManager);
 
-        // do some initial filtering
-        if (sm->isInSystemHeader(D->getLocation())) {
-            /* std::cout << "skipping system header " */
-            /*     << "'" << D->getLocation().printToString(*Result.SourceManager) << "'" */
-            /*     << "\n"; */
+        // we just don't care about any file not given in the commandline
+        if (!sm->isInMainFile(D->getLocation())) {
             return;
         }
 
-      std::cout << "got "
-          << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
-          << " named "
-          << "'" << D->getQualifiedNameAsString() << "'"
-          << " in "
-          << "'" << D->getLocation().printToString(*sm) << "'"
-          << "\n";
+        /* FileID id = sm->getFileID(D->getLocation()); */
+        /* const FileEntry* entry = sm->getFileEntryForID(id); */
+        /* if (entry) { */
+        /*     const DirectoryEntry* dir = entry->getDir(); */
+        /*     llvm::outs() << dir->getName() << " " << theDir->getName() << "\n"; */
+        /* } */
+
+        std::cout << "got "
+            << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
+            << " named "
+            << "'" << D->getQualifiedNameAsString() << "'"
+            << " in "
+            << "'" << D->getLocation().printToString(*sm) << "'"
+            << "\n";
 
       // prints alotta stuff...
       //D->dump();
@@ -83,40 +90,17 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
 };
 } // end anonymous namespace
 
-// options {{{
-// Set up the command line options
-cl::opt<std::string> BuildPath(
-  cl::Positional,
-  cl::desc("<build-path>"));
-
-cl::list<std::string> SourcePaths(
-  cl::Positional,
-  cl::desc("<source0> [... <sourceN>]"),
-  cl::OneOrMore);
-// }}}
-
 int main(int argc, const char **argv) {
 
   // optparsing {{{1
   llvm::sys::PrintStackTraceOnErrorSignal();
-  llvm::OwningPtr<CompilationDatabase> Compilations(
-        FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-  cl::ParseCommandLineOptions(argc, argv);
-  if (!Compilations) {  // Couldn't find a compilation DB from the command line
-    std::string ErrorMessage;
-    Compilations.reset(
-      !BuildPath.empty() ?
-        CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage) :
-        CompilationDatabase::autoDetectFromSource(SourcePaths[0], ErrorMessage)
-      );
-
-//  Still no compilation DB? - bail.
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
-    }
+  CommonOptionsParser OptionsParser(argc, argv);
+  ClangTool Tool(OptionsParser.getCompilations(),
+                 OptionsParser.getSourcePathList());
   // }}}
 
-  ClangTool Tool(*Compilations, SourcePaths);
+  llvm::outs() << OptionsParser.getSourcePathList();
+
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback;
 
@@ -133,6 +117,9 @@ int main(int argc, const char **argv) {
   DeclarationMatcher matcher = recordDecl(isDefinition()).bind("match");
 
   Finder.addMatcher(matcher, &Callback);
+
+  // save us which file we are working on
+  //theDir = Tool.getFiles().getFile(argv[1])->getDir();
 
   return Tool.run(newFrontendActionFactory(&Finder));
 }
