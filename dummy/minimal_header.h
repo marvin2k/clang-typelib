@@ -7,6 +7,8 @@
 
 namespace SomeSpace {
 
+    struct ForwardDeclaration;
+
     // the simplest case in any world
     struct ExampleData {
         int A;
@@ -21,6 +23,21 @@ namespace SomeSpace {
         char Arr[7];
         // nested
         struct ExampleData member;
+    };
+
+    class A {
+        virtual void xxx() = 0;
+        int aaa;
+    };
+    class B : public A {
+        virtual void xxx() {
+        };
+        int lkjbl;
+    };
+
+    struct ForwardDeclaration {
+        int content;
+        int moreContent;
     };
 
     // packed does also works
