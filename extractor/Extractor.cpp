@@ -1,15 +1,4 @@
-//===---- tools/extra/ToolTemplate.cpp - Template for refactoring tool ----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-//  This file implements an empty refactoring tool using the clang tooling.
-//  The goal is to lower the "barrier to entry" for writing refactoring tools.
-//
+//  vim: set foldmethod=marker:
 //  Usage:
 //  tool-template <cmake-output-dir> <file1> <file2> ...
 //
@@ -31,9 +20,8 @@
 //
 //    /path/in/subtree $ find . -name '*.cpp'|
 //        xargs tool-template /path/to/build
-//
-//===----------------------------------------------------------------------===//
 
+// include {{{1
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/SourceManager.h"
@@ -48,13 +36,17 @@
 #include "llvm/Support/Signals.h"
 
 #include <iostream>
+// }}}
 
+// using namespace {{{1
 using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
+// }}}
 
 namespace {
+
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
  public:
   ToolTemplateCallback(Replacements *Replace) : Replace(Replace) {}
@@ -65,14 +57,27 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
 //  including replacing the matched text with other text
     (void) Replace; // This to prevent an "unused member variable" warning;
 
-    const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("declaration");
+    const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("match");
     if (D) {
+
+        // do some initial filtering
+        if (Result.SourceManager->isInSystemHeader(D->getLocation())) {
+            /* std::cout << "skipping system header " */
+            /*     << "'" << D->getLocation().printToString(*Result.SourceManager) << "'" */
+            /*     << "\n"; */
+            return;
+        }
+
       std::cout << "got "
-          << D->getTagKind() << " named "
-          << D->getQualifiedNameAsString() << " in "
-          << D->getLocation().printToString(*Result.SourceManager) << "\n";
+          << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
+          << " named "
+          << "'" << D->getQualifiedNameAsString() << "'"
+          << " in "
+          << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
+          << "\n";
+
       // prints alotta stuff...
-      D->dump();
+      //D->dump();
     }
   }
 
@@ -81,6 +86,7 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
 };
 } // end anonymous namespace
 
+// options {{{
 // Set up the command line options
 cl::opt<std::string> BuildPath(
   cl::Positional,
@@ -90,8 +96,11 @@ cl::list<std::string> SourcePaths(
   cl::Positional,
   cl::desc("<source0> [... <sourceN>]"),
   cl::OneOrMore);
+// }}}
 
 int main(int argc, const char **argv) {
+
+  // optparsing {{{1
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::OwningPtr<CompilationDatabase> Compilations(
         FixedCompilationDatabase::loadFromCommandLine(argc, argv));
@@ -108,6 +117,8 @@ int main(int argc, const char **argv) {
     if (!Compilations)
       llvm::report_fatal_error(ErrorMessage);
     }
+  // }}}
+
   RefactoringTool Tool(*Compilations, SourcePaths);
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(&Tool.getReplacements());
@@ -116,8 +127,13 @@ int main(int argc, const char **argv) {
   //
   // the big table: http://clang.llvm.org/docs/LibASTMatchersReference.html
 
-  // this does not really work -- it visits and matches again inside a matched struct
-  DeclarationMatcher matcher = recordDecl().bind("declaration");
+  // the "bind" will make the match referencable by the given string in the "run()" mathod of the
+  // callback
+
+  // the "isDefinition()" is needed to reject "Class Name Injection" and forward
+  // declarations. see https://stackoverflow.com/questions/24761684 and
+  // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/1994/N0444.pdf
+  DeclarationMatcher matcher = recordDecl(isDefinition()).bind("match");
 
   Finder.addMatcher(matcher, &Callback);
 
