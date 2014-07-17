@@ -1,6 +1,8 @@
 #ifndef TEST_HEADER_DATA_EXAMPLES_H
 #define TEST_HEADER_DATA_EXAMPLES_H
 
+#include <stdint.h>
+
 // anonymous namespace, just for the sake of it?
 namespace {
     struct ExampleData {
