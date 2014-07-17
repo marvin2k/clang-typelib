@@ -13,10 +13,10 @@ namespace ns {
     typedef aClass aClassTypedef;
 
     struct test {
-        char C;
         aClassTypedef A;
         intTypedef B;
-        intTypedefTypedef B;
+        char C;
+        intTypedefTypedef D;
     };
 }
 
