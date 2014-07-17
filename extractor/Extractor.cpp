@@ -1,30 +1,25 @@
 //  vim: set foldmethod=marker:
-//  Usage:
-//  tool-template <header-to-look-at> -- <compile-flags-as-usual>
 //
-//  Example:
-//  ./bin/extractor $ROCK_ROOT/base/types/base/Pose.hpp -- \
-//      -I$ROCK_ROOT/base/types \
-//      -I/usr/include/eigen3 \
-//      -x c++
+// toy-program to test the RecursiveASTVisitor for speed-up compared to ast_matchers
 //
-//  keep in mind that this particular (not very complicated) example still takes 15seconds to
-//  complete...
+// based on this tutorial, with added option-parsing:
+//  http://clang.llvm.org/docs/RAVFrontendAction.html
 //
 
 // include {{{1
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Frontend/FrontendActions.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
-#include "clang/Lex/Lexer.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendActions.h"
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
@@ -34,39 +29,31 @@
 
 // using namespace {{{1
 using namespace clang;
-using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 // }}}
 
-namespace {
+class FindNamedClassVisitor : public RecursiveASTVisitor<FindNamedClassVisitor> {
+    public:
+        explicit FindNamedClassVisitor(ASTContext *Context)
+            : Context(Context) {}
 
-class ToolTemplateCallback : public MatchFinder::MatchCallback {
- public:
+        bool VisitCXXRecordDecl(CXXRecordDecl *D) {
+            const clang::SourceManager& sm(Context->getSourceManager());
 
-  //  This routine will get called for each thing that the matchers find.
-  virtual void run(const MatchFinder::MatchResult &Result) {
+            if (!sm.isInMainFile(D->getLocation())) {
+                /* llvm::outs() << "skipping " */
+                /*     << "'" << D->getQualifiedNameAsString() << "'" */
+                /*     << "\n"; */
+                return true;
+            }
 
-    const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("match");
-    if (D) {
-        clang::SourceManager *sm(Result.SourceManager);
-
-        // we just don't care about any file not given in the commandline
-        if (!sm->isInMainFile(D->getLocation())) {
-            return;
-        }
-
-        // sure that this is needed? these could be better excluded using the ast_matcher
-        bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
-
-        if (hasLayout && D->getDefinition())
-        {
             std::cout << "got "
                 << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
                 << " named "
                 << "'" << D->getQualifiedNameAsString() << "'"
                 << " in "
-                << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
+                << "'" << D->getLocation().printToString(sm) << "'"
                 << "\n";
 
             const clang::ASTRecordLayout *layout = 0;
@@ -90,39 +77,43 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
                 std::cout << "    Qual Type " << QualType::getAsString(T_split) << std::endl;
                 std::cout << std::endl;
             }
+            return true;
         }
-    
-    }
-  }
 
+    private:
+        ASTContext *Context;
 };
-} // end anonymous namespace
+
+class FindNamedClassConsumer : public clang::ASTConsumer {
+    public:
+        explicit FindNamedClassConsumer(ASTContext *Context)
+            : Visitor(Context) {}
+
+        virtual void HandleTranslationUnit(clang::ASTContext &Context) {
+            //Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+        }
+    private:
+        FindNamedClassVisitor Visitor;
+};
+
+class FindNamedClassAction : public clang::ASTFrontendAction {
+    public:
+        virtual clang::ASTConsumer *CreateASTConsumer(
+                clang::CompilerInstance &Compiler, llvm::StringRef InFile) {
+            return new FindNamedClassConsumer(&Compiler.getASTContext());
+        }
+};
 
 int main(int argc, const char **argv) {
 
-  // optparsing {{{1
-  llvm::sys::PrintStackTraceOnErrorSignal();
-  CommonOptionsParser OptionsParser(argc, argv);
-  ClangTool Tool(OptionsParser.getCompilations(),
-                 OptionsParser.getSourcePathList());
-  // }}}
+    // optparsing {{{1
+    llvm::sys::PrintStackTraceOnErrorSignal();
+    clang::tooling::CommonOptionsParser OptionsParser(argc, argv);
+    clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
+            OptionsParser.getSourcePathList());
+    // }}}
 
-  ast_matchers::MatchFinder Finder;
-  ToolTemplateCallback Callback;
+    FrontendActionFactory *FrontendFactory = newFrontendActionFactory<FindNamedClassAction>();
 
-  // AST matching ftw...
-  //
-  // the big table: http://clang.llvm.org/docs/LibASTMatchersReference.html
-
-  // the "bind" will make the match referencable by the given string in the "run()" mathod of the
-  // callback
-
-  // the "isDefinition()" is needed to reject "Class Name Injection" and forward
-  // declarations. see https://stackoverflow.com/questions/24761684 and
-  // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/1994/N0444.pdf
-  DeclarationMatcher matcher = recordDecl(isDefinition()).bind("match");
-
-  Finder.addMatcher(matcher, &Callback);
-
-  return Tool.run(newFrontendActionFactory(&Finder));
+    return Tool.run(FrontendFactory);
 }
