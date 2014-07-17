@@ -90,3 +90,4 @@ clang -include-pch test.h.pch -c dummy/dummy.cpp -x c++-header
 #     adb6bc4cf0e09a5aca773ab7680bc4c7bf581909) (http://llvm.org/git/llvm.git
 #     5c6aa738fb3325ae499454877f1e2926d2368135)) than the compiler ()
 
+so, at a first glance, this does not look like a smooth path to follow...
