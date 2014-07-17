@@ -28,6 +28,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
+#include "TypelibBuilder.hpp"
 
 #include <iostream>
 // }}}
@@ -38,6 +39,9 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 // }}}
+
+TypelibBuilder builder;
+
 
 namespace {
 
@@ -56,42 +60,43 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
             return;
         }
 
-        // sure that this is needed? these could be better excluded using the ast_matcher
-        bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
-
-        if (hasLayout && D->getDefinition())
-        {
-            std::cout << "got "
-                << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
-                << " named "
-                << "'" << D->getQualifiedNameAsString() << "'"
-                << " in "
-                << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
-                << "\n";
-
-            const clang::ASTRecordLayout *layout = 0;
-            layout = &(D->getASTContext().getASTRecordLayout(D));
-//             std::cout << "Alignment " << layout-> getAlignment().getQuantity() << std::endl;
-            std::cout << "Type " << D->getQualifiedNameAsString() <<std::endl;
-            std::cout << "  Size " << layout->getSize().getQuantity() << std::endl;
-
-            if(D->field_begin() != D->field_end())
-            {
-                std::cout << "  Members :" << std::endl;
-            }
-            
-            for(RecordDecl::field_iterator fit = D->field_begin(); fit != D->field_end(); fit++)
-            {
-                std::cout << "    Field " << fit->getQualifiedNameAsString() << std::endl;
-                std::cout << "    Offset " << layout->getFieldOffset(fit->getFieldIndex()) << std::endl;
-                std::cout << "    Decl Name " << fit->getNameAsString() << std::endl;
-                
-                SplitQualType T_split = fit->getType().split();
-                std::cout << "    Qual Type " << QualType::getAsString(T_split) << std::endl;
-                std::cout << std::endl;
-            }
-        }
+//         // sure that this is needed? these could be better excluded using the ast_matcher
+//         bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
+// 
+//         if (hasLayout && D->getDefinition())
+//         {
+//             std::cout << "got "
+//                 << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
+//                 << " named "
+//                 << "'" << D->getQualifiedNameAsString() << "'"
+//                 << " in "
+//                 << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
+//                 << "\n";
+// 
+//             const clang::ASTRecordLayout *layout = 0;
+//             layout = &(D->getASTContext().getASTRecordLayout(D));
+// //             std::cout << "Alignment " << layout-> getAlignment().getQuantity() << std::endl;
+//             std::cout << "Type " << D->getQualifiedNameAsString() <<std::endl;
+//             std::cout << "  Size " << layout->getSize().getQuantity() << std::endl;
+// 
+//             if(D->field_begin() != D->field_end())
+//             {
+//                 std::cout << "  Members :" << std::endl;
+//             }
+//             
+//             for(RecordDecl::field_iterator fit = D->field_begin(); fit != D->field_end(); fit++)
+//             {
+//                 std::cout << "    Field " << fit->getQualifiedNameAsString() << std::endl;
+//                 std::cout << "    Offset " << layout->getFieldOffset(fit->getFieldIndex()) << std::endl;
+//                 std::cout << "    Decl Name " << fit->getNameAsString() << std::endl;
+//                 
+//                 SplitQualType T_split = fit->getType().split();
+//                 std::cout << "    Qual Type " << QualType::getAsString(T_split) << std::endl;
+//                 std::cout << std::endl;
+//             }
+//         }
     
+        builder.registerType(D);
     }
   }
 

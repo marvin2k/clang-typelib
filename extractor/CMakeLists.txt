@@ -4,6 +4,7 @@ add_definitions("-Wno-unused-local-typedefs")
 
 add_clang_executable(extractor
     Extractor.cpp
+    TypelibBuilder.cpp
     )
 
 target_link_libraries(extractor
