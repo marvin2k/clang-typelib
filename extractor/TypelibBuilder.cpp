@@ -1,5 +1,4 @@
 #include "TypelibBuilder.hpp"
-#include "../../llvm/tools/clang/include/clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/DeclCXX.h"
