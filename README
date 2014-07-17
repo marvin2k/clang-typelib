@@ -5,8 +5,11 @@ another question on SE
 bug-report for debian-helper scripts on llvm-org
  - http://llvm.org/bugs/show_bug.cgi?id=20132
 
-"PCX" is a python parser for the ast
+"PCX" is a python parser to generate xml from the ast
  - http://stackoverflow.com/a/23984908/3520187
+
+see the rock-dev discussion about the progress of this beauty
+ - http://www.dfki.de/pipermail/rock-dev/2014-July/004727.html
 
 
 shell scripts
