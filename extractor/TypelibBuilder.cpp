@@ -44,7 +44,7 @@ void TypelibBuilder::registerType(const clang::CXXRecordDecl* type)
     for(clang::RecordDecl::field_iterator fit = type->field_begin(); fit != type->field_end(); fit++)
     {
         TemporaryFieldType fieldType;
-        clang::SplitQualType T_split = fit->getType().split();
+        clang::SplitQualType T_split = fit->getType().getCanonicalType().split();
         fieldType.typeName = clang::QualType::getAsString(T_split);
         fieldType.fieldName = fit->getNameAsString();
         fieldType.offsetInBits = typeLayout.getFieldOffset(fit->getFieldIndex());
