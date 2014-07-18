@@ -11,26 +11,11 @@ bug-report for debian-helper scripts on llvm-org
 see the rock-dev discussion about the progress of this beauty
  - http://www.dfki.de/pipermail/rock-dev/2014-July/004727.html
 
+talk about Clang AST
+ - https://www.youtube.com/watch?v=VqCkCDFLSsc
 
-shell scripts
--------------
-
-calling "printer.sh" for base::JointState will give us:
-    time ./printer.sh base::JointState $ROCK_ROOT/base/types/base/JointState.hpp -I$ROCK_ROOT/base/types
-...
-*** Dumping AST Record Layout
-   0 | struct base::JointState
-   0 |   double position
-   8 |   float speed
-  12 |   float effort
-  16 |   float raw
-     | [sizeof=24, dsize=20, align=8
-     |  nvsize=20, nvalign=8]
-./printer.sh base::JointState ~/TransTerrA/rock/base/types/base/JointState.hpp  0.51s user 0.02s system 98% cpu 0.546 total
-
-
-using ready-made clang stuff
-============================
+using clang stuff
+=================
 
 installing clang
 ----------------
@@ -70,6 +55,23 @@ or, in the rock-case:
         -I$ROCK_ROOT/base/types \
         -I/usr/include/eigen3 \
         -x c++
+
+early proof-of-concept
+----------------------
+
+calling "printer.sh" for base::JointState will give us:
+    time ./printer.sh base::JointState $ROCK_ROOT/base/types/base/JointState.hpp -I$ROCK_ROOT/base/types
+...
+*** Dumping AST Record Layout
+   0 | struct base::JointState
+   0 |   double position
+   8 |   float speed
+  12 |   float effort
+  16 |   float raw
+     | [sizeof=24, dsize=20, align=8
+     |  nvsize=20, nvalign=8]
+./printer.sh base::JointState ~/TransTerrA/rock/base/types/base/JointState.hpp  0.51s user 0.02s system 98% cpu 0.546 total
+
 
 precompiled-headers
 -------------------

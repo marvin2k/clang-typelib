@@ -1,0 +1,38 @@
+This is intended to be a plugin for typelib and living in its codebase. It will
+link against a system-installed libclang.
+
+input
+-----
+
+It gets a set of explicitly defined headers ("import_types_from" in the orogen
+file) and compiler options (-I and -D) and calls the clang::tooling::ClangTool
+once for each header.
+
+opaque
+------
+
+See http://rock-robotics.org/master/documentation/orogen/opaque_types.html
+
+A list of types (typedefs) representing opaque types are given to the tool,
+which should be added to the database.
+
+reject
+------
+
+reject a Record which contains Pointers, References or Virtual Function _if_ it
+can not be resolved via one the of the known "opaque" typedefs.
+
+output
+------
+
+At the end the tool outputs a Database as a Typelib::Registry object.
+
+The database contains all the types that are defined in the explicitly
+given headers (import_types_from) as well as all the types that are
+necessary to define them. If you have a type in your header that uses
+timespec, it will end in the database, otherwise it gets thrown out.
+
+All enums defined in the given headerfile as "string-value" pairs.
+
+The importer has to handle a name-conversion from C++ to typelib-normalization
+(base::Pose -> base/Pose).
