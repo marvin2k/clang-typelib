@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+
 # prevent loud warnings from gcc-4.9 caused by a macro-expansion the
 # AST-headers... this only clutters up the compiler output with nonsense
 add_definitions("-Wno-unused-local-typedefs")
