@@ -35,7 +35,7 @@ mkdir -p ${build_location} && cd ${build_location}
 cmake ${git_location}\
     -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON \
     -DCMAKE_INSTALL_PREFIX:PATH="$HOME/llvm.install" \
-    -DLLVM_TARGETS_TO_BUILD="X86;AArch64;ARM"
+    -DLLVM_TARGETS_TO_BUILD="X86;AArch64;ARM" \
     -DCMAKE_BUILD_TYPE="Release"
 
 make -j`getconf _NPROCESSORS_ONLN` all check-all install

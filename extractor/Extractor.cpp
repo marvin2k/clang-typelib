@@ -39,6 +39,55 @@ using namespace clang::tooling;
 using namespace llvm;
 // }}}
 
+// void shift(int deep) {{{1
+// the stupiest c-level-space-shifter...
+void shift(int deep) {
+     for (int i=0;i<deep;i++)
+         std::cout << ' ';
+}
+// }}}
+
+void printFields(const CXXRecordDecl *D, size_t offset = 0, unsigned int deep = 0) {
+
+     const clang::ASTRecordLayout& layout = D->getASTContext().getASTRecordLayout(D);
+
+     // FIXME: this print is missing template-parameters, as used in Eigen for example
+     shift(deep);
+     std::cout << "RecordType: '" << D->getQualifiedNameAsString() << "'" << std::endl;
+
+     shift(deep);
+     std::cout << "  Size: " << layout.getSize().getQuantity() << std::endl;
+
+     if(D->field_begin() != D->field_end())
+     {
+         shift(deep);
+         std::cout << "  Member Fields:" << std::endl;
+     }
+
+     for(RecordDecl::field_iterator fit = D->field_begin(); fit != D->field_end(); fit++)
+     {
+         size_t additionalOffset = layout.getFieldOffset(fit->getFieldIndex());
+         size_t actualOffset = offset + additionalOffset;
+         shift(deep);
+         std::cout << "    Offset: " << actualOffset << std::endl;
+         shift(deep);
+         std::cout << "    QualifiedName: '" << fit->getQualifiedNameAsString() << "'" << std::endl;
+
+         // this will resolve typedefs.  stupid question: what is the actual difference between
+         // "Type" and "QualType"?
+         QualType type = fit->getType()->getCanonicalTypeInternal().getDesugaredType(D->getASTContext());
+
+         if (type->isRecordType()) {
+             // recursion...
+             printFields(fit->getType()->getAsCXXRecordDecl(), actualOffset, deep+4);
+         } else {
+             shift(deep);
+             std::cout << "    DesugaredType: '" << QualType::getAsString(type.split()) << "'" << std::endl;
+         }
+
+     }
+}
+
 namespace {
 
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
@@ -51,46 +100,30 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
     if (D) {
         clang::SourceManager *sm(Result.SourceManager);
 
-        // we just don't care about any file not given in the commandline
+        // we just don't care about any file not given explicitly in the commandline
         if (!sm->isInMainFile(D->getLocation())) {
             return;
         }
 
-        // sure that this is needed? these could be better excluded using the ast_matcher
-        bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
+         // sure that this is needed? these could be better excluded using the ast_matcher
+         bool hasLayout = !D->isDependentType() && !D->isInvalidDecl();
 
-        if (hasLayout && D->getDefinition())
-        {
-            std::cout << "got "
-                << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
-                << " named "
-                << "'" << D->getQualifiedNameAsString() << "'"
-                << " in "
-                << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
-                << "\n";
+         if (hasLayout && D->getDefinition())
+         {
+             std::cout << "got "
+                 << "'" << clang::TypeWithKeyword::getTagTypeKindName(D->getTagKind()) << "'"
+                 << " named "
+                 << "'" << D->getQualifiedNameAsString() << "'"
+                 << " in "
+                 << "'" << D->getLocation().printToString(*Result.SourceManager) << "'"
+                 << std::endl;
 
-            const clang::ASTRecordLayout *layout = 0;
-            layout = &(D->getASTContext().getASTRecordLayout(D));
-//             std::cout << "Alignment " << layout-> getAlignment().getQuantity() << std::endl;
-            std::cout << "Type " << D->getQualifiedNameAsString() <<std::endl;
-            std::cout << "  Size " << layout->getSize().getQuantity() << std::endl;
+             // recursively print the fields in this record
+             printFields(D);
+             // we are done, mark with a newline
+             std::cout << std::endl;
 
-            if(D->field_begin() != D->field_end())
-            {
-                std::cout << "  Members :" << std::endl;
-            }
-            
-            for(RecordDecl::field_iterator fit = D->field_begin(); fit != D->field_end(); fit++)
-            {
-                std::cout << "    Field " << fit->getQualifiedNameAsString() << std::endl;
-                std::cout << "    Offset " << layout->getFieldOffset(fit->getFieldIndex()) << std::endl;
-                std::cout << "    Decl Name " << fit->getNameAsString() << std::endl;
-                
-                SplitQualType T_split = fit->getType().split();
-                std::cout << "    Qual Type " << QualType::getAsString(T_split) << std::endl;
-                std::cout << std::endl;
-            }
-        }
+         }
     
     }
   }

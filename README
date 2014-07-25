@@ -5,29 +5,17 @@ another question on SE
 bug-report for debian-helper scripts on llvm-org
  - http://llvm.org/bugs/show_bug.cgi?id=20132
 
-"PCX" is a python parser for the ast
+"PCX" is a python parser to generate xml from the ast
  - http://stackoverflow.com/a/23984908/3520187
 
+see the rock-dev discussion about the progress of this beauty
+ - http://www.dfki.de/pipermail/rock-dev/2014-July/004727.html
 
-shell scripts
--------------
+talk about Clang AST
+ - https://www.youtube.com/watch?v=VqCkCDFLSsc
 
-calling "printer.sh" for base::JointState will give us:
-    time ./printer.sh base::JointState $ROCK_ROOT/base/types/base/JointState.hpp -I$ROCK_ROOT/base/types
-...
-*** Dumping AST Record Layout
-   0 | struct base::JointState
-   0 |   double position
-   8 |   float speed
-  12 |   float effort
-  16 |   float raw
-     | [sizeof=24, dsize=20, align=8
-     |  nvsize=20, nvalign=8]
-./printer.sh base::JointState ~/TransTerrA/rock/base/types/base/JointState.hpp  0.51s user 0.02s system 98% cpu 0.546 total
-
-
-using ready-made clang stuff
-============================
+using clang stuff
+=================
 
 installing clang
 ----------------
@@ -67,3 +55,41 @@ or, in the rock-case:
         -I$ROCK_ROOT/base/types \
         -I/usr/include/eigen3 \
         -x c++
+
+early proof-of-concept
+----------------------
+
+calling "printer.sh" for base::JointState will give us:
+    time ./printer.sh base::JointState $ROCK_ROOT/base/types/base/JointState.hpp -I$ROCK_ROOT/base/types
+...
+*** Dumping AST Record Layout
+   0 | struct base::JointState
+   0 |   double position
+   8 |   float speed
+  12 |   float effort
+  16 |   float raw
+     | [sizeof=24, dsize=20, align=8
+     |  nvsize=20, nvalign=8]
+./printer.sh base::JointState ~/TransTerrA/rock/base/types/base/JointState.hpp  0.51s user 0.02s system 98% cpu 0.546 total
+
+
+precompiled-headers
+-------------------
+
+the current "extractor" tool takes 15seconds for one simple base-type header...
+too much. using precompiled headers might speed this up. see for example
+http://llvm.org/releases/3.3/tools/clang/docs/PCHInternals.html
+
+# when calling clang with "-cc1" it does not find any headers...
+clang -cc1 dummy/minimal_header.h -emit-pch -o dummy/minimal_header.h.pch -I/usr/include -I/usr/include/x86_64-linux-gnu -x c++
+
+# but when reusing it, it will error with "exception handling was disabled in
+# PCH file but is currently enabled"...
+clang -include-pch test.h.pch -c dummy/dummy.cpp -x c++-header 
+
+# furthermore, when using the tooling-binary, the following error is produced:
+# error: PCH file built from a different branch ((http://llvm.org/git/clang.git
+#     adb6bc4cf0e09a5aca773ab7680bc4c7bf581909) (http://llvm.org/git/llvm.git
+#     5c6aa738fb3325ae499454877f1e2926d2368135)) than the compiler ()
+
+so, at a first glance, this does not look like a smooth path to follow...
