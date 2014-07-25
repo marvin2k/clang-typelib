@@ -1,18 +1,22 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(extractor)
+
 # prevent loud warnings from gcc-4.9 caused by a macro-expansion the
 # AST-headers... this only clutters up the compiler output with nonsense
 add_definitions("-Wno-unused-local-typedefs")
 
 macro(llvm_find_config LLVM_REQUIRED_VERSION)
-    message("REQUIRED ${LLVM_REQUIRED_VERSION}")
     if (LLVM_REQUIRED_VERSION STREQUAL "")
         list(APPEND __llvm_names llvm-config-3.6 llvm-config-3.5 llvm-config-3.4)
     else()
+        message("-- llvm_find_config: required to look for llvm-config-${LLVM_REQUIRED_VERSION}")
         list(APPEND __llvm_names llvm-config-${LLVM_REQUIRED_VERSION})
     endif()
-    message("NAMES ${__llvm_names}")
+    message("-- llvm_find_config: looking for ${__llvm_names}")
     find_program(LLVM_CONFIG_EXECUTABLE NAMES ${__llvm_names})
     if (NOT LLVM_CONFIG_EXECUTABLE)
-        message(FATAL_ERROR "could not find the llvm-config script (candidates: ${__llvm_names})")
+        message(FATAL_ERROR "llvm_find_config: could not find llvm-config (candidates: ${__llvm_names})")
     endif()
 endmacro()
 
@@ -21,7 +25,7 @@ macro(llvm_get_config OUTPUT)
         RESULT_VARIABLE __llvm_ok
         OUTPUT_VARIABLE ${OUTPUT})
     if (NOT __llvm_ok STREQUAL 0)
-        message(FATAL_ERROR "failed to execute llvm-config ${ARGN} (result: ${__llvm_ok})")
+        message(FATAL_ERROR "llvm_get_config: failed to execute ${LLVM_CONFIG_EXECUTABLE} ${ARGN} (result: ${__llvm_ok})")
     endif()
     string(STRIP ${OUTPUT} "${${OUTPUT}}")
     string(REPLACE "\n" "" ${OUTPUT} "${${OUTPUT}}")
@@ -42,7 +46,7 @@ macro(resolve_library_flags VARIABLE)
 endmacro()
 
 llvm_find_config(3.4)
-message(${LLVM_CONFIG_EXECUTABLE})
+message("-- llvm: using ${LLVM_CONFIG_EXECUTABLE}")
 llvm_get_config(LLVM_CXXFLAGS "--cxxflags")
 llvm_get_config(LLVM_LIBRARY_DIRS "--libdir")
 llvm_get_config(LLVM_LIBRARIES "--libs" core option analysis support bitreader mcparser transformutils)
